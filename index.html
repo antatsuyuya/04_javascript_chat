@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <!-- <link rel="stylesheet" href="style.css"> -->
+<style>
+
+</style>
+
+</head>
+<body>
+
+    <div id="output" style="overflow: auto;height: 300px;"></div>
+
+
+
+    <!-- コンテンツ表示画面 -->
+    <div>
+        <div>
+            名前：<input type="text" id="uname">
+        </div>
+        <div>
+            画像：<input type="text" id="upload">
+        </div>
+        <div>
+            <textarea id="text" cols="30" rows="10"></textarea>
+            <button id="send">送信</button>
+            <!-- <input type="file" id="file" />
+            <button id="upload" type="button" id=upload>アップロード</button> -->
+        </div>
+    </div>
+
+
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>   
+
+<!--firebaseのコード-->
+
+
+    <script type="module">
+        // Import the functions you need from the SDKs you need
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js";
+        import { getDatabase, ref, push, set, onChildAdded, remove, onChildRemoved } 
+        from "https://www.gstatic.com/firebasejs/9.6.1/firebase-database.js";        // TODO: Add SDKs for Firebase products that you want to use
+        // https://firebase.google.com/docs/web/setup#available-libraries
+      
+        // Your web app's Firebase configuration
+        const firebaseConfig = {
+          apiKey: "AIzaSyC72pEjeSxvkzeJh8DhwIriStVPLiCaIRU",
+          authDomain: "gsdemo-e7ea8.firebaseapp.com",
+          projectId: "gsdemo-e7ea8",
+          storageBucket: "gsdemo-e7ea8.appspot.com",
+          messagingSenderId: "273052528662",
+          appId: "1:273052528662:web:af72f757fa1ad6a9890537"
+        };
+      
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        
+        //追加2
+        const db  = getDatabase(app); //RealtimeDBに接続
+        const dbRef = ref(db,"chat"); //RealtimeDB内の"chat"を使う
+
+    // 送信処理
+    // $('#send').on('click', function(){
+    //   alert(1)//動いたらalertはコメントアウトしておきましょう！
+    //   // 送信の処理を記述していきます🤗
+
+    // });
+
+        //送信
+    $("#send").on("click", function(){
+        // データの塊を作成している
+        const msg={
+            uname : $("#uname").val(),  //id unameのところ
+            // upload : $("#upload").val(),  //id imgのところ
+            text :$("#text").val(),　//id textのところ
+            // upload :$("#upload").val()
+        }
+      //ユニークKEYを生成 = 絶対にかぶらない番号みたいなもの
+    const newPostRef=push(dbRef);
+
+  //"chat"にユニークKEYをつけてオブジェクトデータを登録
+    set(newPostRef, msg);
+
+      });
+
+      //受信処理
+      onChildAdded(dbRef, function(data){
+        const msg = data.val();
+        const key = data.key;//これが固有のカギ
+    console.log(data,"data")
+    console.log(key,"鍵")
+
+        // let h ="<p>";
+        //     h += msg.uname;
+        //     h += "<br>";
+        //     h += msg.text;
+        //     h +="</p>";
+        //     $("#output").append(h);
+    
+
+  //テンプレートリテラル
+    let hh = `
+    <div class="meessage" data-key=${key}>
+        <input type="text" value=${msg.uname} class="uname"/>
+        <input type="text" value=${msg.text} class="text"/>
+        <input type="image" value=${msg.upload} class="upload">
+        <p class="update">更新</p>
+        <p class="delete">削除</p>
+    </div>`;
+
+    $("#output").append(hh);
+
+});//hhがカギ
+
+
+$(document).on("click", ".update",function(){
+    //clickされたところの鍵
+    const x = $(this).parent().data().key;
+
+    const nameValue = $(this).siblings(".uname").val();
+    // const imgValue= $(this).siblings(".img").val();
+    const textValue = $(this).siblings(".text").val();
+
+    console.log(nameValue,"同じ列")
+    // console.log(imgValue,"同じ列")
+    console.log(textValue,"同じ列")
+    
+    set(ref(db, "chat/" +x,"update") , {
+    uname : nameValue,
+    // imd : imgValue,
+    text : textValue
+})
+});
+
+
+
+$(document).on("click", ".delete",function(){
+    //clickされたところの鍵
+    const v = $(this).parent().data().key;
+    
+    console.log(v,"vvv")
+    //vは鍵
+    console.log(ref(db,"chat/"+v),"vvv")
+    remove(ref(db,"chat/"+v,"vvv"));
+    
+    //htmlを消す
+    $(this).parent().remove();
+
+});
+
+$(document).on("click",'upload', function() {
+    const y = $(this).parent().data().key;
+    const imageUrl = $(this).siblings(".img").val();
+
+    set(ref(db, "chat/" +y,"upload") , {
+    imd : imageUrl
+})
+}); 
+
+       
+
+
+//  //画像投稿
+//        $("#into").on("click", function(){
+//         // データの塊を作成している
+//         const msg={
+//             uname : $("#uname").val(),  //id unameのところ
+//             text :$("#text").val()　//id textのところ
+//         }
+//       //ユニークKEYを生成 = 絶対にかぶらない番号みたいなもの
+//     const newPostRef=push(dbRef);
+
+//   //"chat"にユニークKEYをつけてオブジェクトデータを登録
+//     set(newPostRef, msg);
+
+//       });
+
+
+
+
+
+
+     //firebaseできることが多い　配列（arey）、object（）画像投稿
+     //
+
+    //  jquery parent()おさらい
+    //  jquery remove
+    //  jquery data()
+    //  jquery 動的追加
+    //  jquery siblings
+
+
+</script>
+ <!--   <script src="test.js"></script> -->
+
+</body>
+</html>
